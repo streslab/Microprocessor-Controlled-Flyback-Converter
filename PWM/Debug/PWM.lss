@@ -1,0 +1,222 @@
+
+PWM.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0000012e  00000000  00000000  00000074  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  0000012e  000001a2  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .stab         000006cc  00000000  00000000  000001a4  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  3 .stabstr      00000085  00000000  00000000  00000870  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  4 .debug_aranges 00000080  00000000  00000000  000008f8  2**3
+                  CONTENTS, READONLY, DEBUGGING
+  5 .debug_info   00000335  00000000  00000000  00000978  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_abbrev 0000008e  00000000  00000000  00000cad  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_line   000001f3  00000000  00000000  00000d3b  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_frame  00000078  00000000  00000000  00000f30  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_str    0000009c  00000000  00000000  00000fa8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    000000ac  00000000  00000000  00001044  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0c 94 2a 00 	jmp	0x54	; 0x54 <__ctors_end>
+   4:	0c 94 5e 00 	jmp	0xbc	; 0xbc <__vector_1>
+   8:	0c 94 7d 00 	jmp	0xfa	; 0xfa <__vector_2>
+   c:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  10:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  14:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  18:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  1c:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  20:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  24:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  28:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  2c:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  30:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  34:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  38:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  3c:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  40:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  44:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  48:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  4c:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+  50:	0c 94 47 00 	jmp	0x8e	; 0x8e <__bad_interrupt>
+
+00000054 <__ctors_end>:
+  54:	11 24       	eor	r1, r1
+  56:	1f be       	out	0x3f, r1	; 63
+  58:	cf e5       	ldi	r28, 0x5F	; 95
+  5a:	d8 e0       	ldi	r29, 0x08	; 8
+  5c:	de bf       	out	0x3e, r29	; 62
+  5e:	cd bf       	out	0x3d, r28	; 61
+
+00000060 <__do_copy_data>:
+  60:	10 e0       	ldi	r17, 0x00	; 0
+  62:	a0 e6       	ldi	r26, 0x60	; 96
+  64:	b0 e0       	ldi	r27, 0x00	; 0
+  66:	ee e2       	ldi	r30, 0x2E	; 46
+  68:	f1 e0       	ldi	r31, 0x01	; 1
+  6a:	02 c0       	rjmp	.+4      	; 0x70 <__do_copy_data+0x10>
+  6c:	05 90       	lpm	r0, Z+
+  6e:	0d 92       	st	X+, r0
+  70:	a0 36       	cpi	r26, 0x60	; 96
+  72:	b1 07       	cpc	r27, r17
+  74:	d9 f7       	brne	.-10     	; 0x6c <__do_copy_data+0xc>
+
+00000076 <__do_clear_bss>:
+  76:	10 e0       	ldi	r17, 0x00	; 0
+  78:	a0 e6       	ldi	r26, 0x60	; 96
+  7a:	b0 e0       	ldi	r27, 0x00	; 0
+  7c:	01 c0       	rjmp	.+2      	; 0x80 <.do_clear_bss_start>
+
+0000007e <.do_clear_bss_loop>:
+  7e:	1d 92       	st	X+, r1
+
+00000080 <.do_clear_bss_start>:
+  80:	a0 36       	cpi	r26, 0x60	; 96
+  82:	b1 07       	cpc	r27, r17
+  84:	e1 f7       	brne	.-8      	; 0x7e <.do_clear_bss_loop>
+  86:	0e 94 49 00 	call	0x92	; 0x92 <main>
+  8a:	0c 94 95 00 	jmp	0x12a	; 0x12a <_exit>
+
+0000008e <__bad_interrupt>:
+  8e:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
+
+00000092 <main>:
+#include <avr/interrupt.h>
+
+int main(void)
+{
+	//Disable Interrupts
+	cli();
+  92:	f8 94       	cli
+	//Set PIND5:4(PWM) and PIN3:2(INT1:0) to Output
+	//TODO: Determine which PIN is PWM
+	DDRD = 0b00110000;
+  94:	80 e3       	ldi	r24, 0x30	; 48
+  96:	81 bb       	out	0x11, r24	; 17
+	//Set counter options
+	TCCR1A = 0b10100010;
+  98:	82 ea       	ldi	r24, 0xA2	; 162
+  9a:	8f bd       	out	0x2f, r24	; 47
+	TCCR1B = 0b00011001;
+  9c:	89 e1       	ldi	r24, 0x19	; 25
+  9e:	8e bd       	out	0x2e, r24	; 46
+	//Set TOP = ICR1 for 24.5kHz
+	ICR1 = 0x14D;
+  a0:	8d e4       	ldi	r24, 0x4D	; 77
+  a2:	91 e0       	ldi	r25, 0x01	; 1
+  a4:	97 bd       	out	0x27, r25	; 39
+  a6:	86 bd       	out	0x26, r24	; 38
+	//Arbitrarily Set OCR1A
+	OCR1A = 0x05;
+  a8:	85 e0       	ldi	r24, 0x05	; 5
+  aa:	90 e0       	ldi	r25, 0x00	; 0
+  ac:	9b bd       	out	0x2b, r25	; 43
+  ae:	8a bd       	out	0x2a, r24	; 42
+	//Enable INT0 and INT1
+	GICR = 1<<INT0 | 1<<INT1;
+  b0:	80 ec       	ldi	r24, 0xC0	; 192
+  b2:	8b bf       	out	0x3b, r24	; 59
+	//Set Falling Edge Trigger for Interrupts
+	MCUCR = 1<<ISC01 | 1<<ISC00 | 1<<ISC11 | 1<<ISC10;
+  b4:	8f e0       	ldi	r24, 0x0F	; 15
+  b6:	85 bf       	out	0x35, r24	; 53
+	//Re-enable Interrupts
+	sei();
+  b8:	78 94       	sei
+  ba:	ff cf       	rjmp	.-2      	; 0xba <main+0x28>
+
+000000bc <__vector_1>:
+}
+
+//This interrupt takes an input from a button and increases the duty
+//cycle.
+//Params: in
+ISR(INT0_vect){
+  bc:	1f 92       	push	r1
+  be:	0f 92       	push	r0
+  c0:	0f b6       	in	r0, 0x3f	; 63
+  c2:	0f 92       	push	r0
+  c4:	11 24       	eor	r1, r1
+  c6:	2f 93       	push	r18
+  c8:	3f 93       	push	r19
+  ca:	8f 93       	push	r24
+  cc:	9f 93       	push	r25
+	if(OCR1A <= (ICR1 - 1))
+  ce:	2a b5       	in	r18, 0x2a	; 42
+  d0:	3b b5       	in	r19, 0x2b	; 43
+  d2:	86 b5       	in	r24, 0x26	; 38
+  d4:	97 b5       	in	r25, 0x27	; 39
+  d6:	01 97       	sbiw	r24, 0x01	; 1
+  d8:	82 17       	cp	r24, r18
+  da:	93 07       	cpc	r25, r19
+  dc:	28 f0       	brcs	.+10     	; 0xe8 <__vector_1+0x2c>
+
+		OCR1A += 0x01;
+  de:	8a b5       	in	r24, 0x2a	; 42
+  e0:	9b b5       	in	r25, 0x2b	; 43
+  e2:	01 96       	adiw	r24, 0x01	; 1
+  e4:	9b bd       	out	0x2b, r25	; 43
+  e6:	8a bd       	out	0x2a, r24	; 42
+
+}
+  e8:	9f 91       	pop	r25
+  ea:	8f 91       	pop	r24
+  ec:	3f 91       	pop	r19
+  ee:	2f 91       	pop	r18
+  f0:	0f 90       	pop	r0
+  f2:	0f be       	out	0x3f, r0	; 63
+  f4:	0f 90       	pop	r0
+  f6:	1f 90       	pop	r1
+  f8:	18 95       	reti
+
+000000fa <__vector_2>:
+
+//This interrupt takes an input from a button and decreases the duty
+//cycle.
+//Params: in
+ISR(INT1_vect){
+  fa:	1f 92       	push	r1
+  fc:	0f 92       	push	r0
+  fe:	0f b6       	in	r0, 0x3f	; 63
+ 100:	0f 92       	push	r0
+ 102:	11 24       	eor	r1, r1
+ 104:	8f 93       	push	r24
+ 106:	9f 93       	push	r25
+	if(OCR1A > 0x01)
+ 108:	8a b5       	in	r24, 0x2a	; 42
+ 10a:	9b b5       	in	r25, 0x2b	; 43
+ 10c:	82 30       	cpi	r24, 0x02	; 2
+ 10e:	91 05       	cpc	r25, r1
+ 110:	28 f0       	brcs	.+10     	; 0x11c <__vector_2+0x22>
+
+		OCR1A -= 0x01;
+ 112:	8a b5       	in	r24, 0x2a	; 42
+ 114:	9b b5       	in	r25, 0x2b	; 43
+ 116:	01 97       	sbiw	r24, 0x01	; 1
+ 118:	9b bd       	out	0x2b, r25	; 43
+ 11a:	8a bd       	out	0x2a, r24	; 42
+
+ 11c:	9f 91       	pop	r25
+ 11e:	8f 91       	pop	r24
+ 120:	0f 90       	pop	r0
+ 122:	0f be       	out	0x3f, r0	; 63
+ 124:	0f 90       	pop	r0
+ 126:	1f 90       	pop	r1
+ 128:	18 95       	reti
+
+0000012a <_exit>:
+ 12a:	f8 94       	cli
+
+0000012c <__stop_program>:
+ 12c:	ff cf       	rjmp	.-2      	; 0x12c <__stop_program>

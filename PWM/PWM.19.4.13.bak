@@ -1,0 +1,61 @@
+/*---------------------------------------------------------------------*\
+ * 
+ *	Names:   Reed Slaby, Kevin Stauffer
+ *	
+ *	Created: SS2013
+ *
+ *	Purpose: This program is designed to regulate and control a flyback
+ *			 converter.  The output voltage should be held at a user-
+ *			 defined value while the input voltage varies randomly.
+ *
+ *	Input:   Voltage Up, Voltage Down, Over-Current, Feedback
+ *
+ *	Output:  Voltage Display, PWM
+ *
+\*---------------------------------------------------------------------*/
+
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+int main(void)
+{
+	//Disable Interrupts
+	cli();
+	//Set PINB3 to Output
+	DDRB = 0b00001000;
+	//Set every PINA to Output
+	DDRA = 0xFF;
+	//Set counter options
+	TCCR0 = 0b01101001;
+	//Set Duty Cycle
+	OCR0 = 0x01;
+	//Enable INT0 and INT1
+	GICR = 1<<INT0 | 1<<INT1;
+	//Set Falling Edge Trigger for Interrupts
+	MCUCR = 1<<ISC01 | 1<<ISC00 | 1<<ISC11 | 1<<ISC10;
+	//Re-enable Interrupts
+	sei();
+	
+    while(1)
+    {
+        //Display OCR0 value on LED's
+		PORTA = OCR0;
+    }
+}
+
+//This interrupt takes an input from a button and increases the duty
+//cycle.
+//Params: in
+ISR(INT0_vect){
+	if(OCR0 <= 0xFA)
+		OCR0 += 0x01;
+}
+
+//This interrupt takes an input from a button and decreases the duty
+//cycle.
+//Params: in
+ISR(INT1_vect){
+	if(OCR0 > 0x5)
+		OCR0 -= 0x1;
+}
