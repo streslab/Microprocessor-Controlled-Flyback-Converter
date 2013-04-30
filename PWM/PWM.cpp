@@ -77,8 +77,7 @@ ISR(INT1_vect){
 		OCR1A -= 0x01;
 
 }
-<<<<<<< HEAD
-=======
+
 ISR(ADC_vect) //ADC inturept vector function
 {
 	uinit8_t theLowADC = ADCL;  //assign the variable theLowADC as the value in the register ADCL
@@ -86,4 +85,3 @@ ISR(ADC_vect) //ADC inturept vector function
 	//Display the value on the Display
 	ADCSRA |=1<<ADSC;  //start ADC conversion
 }
->>>>>>> 26ad03e2f0f423e543e22276d296250179b79d20
