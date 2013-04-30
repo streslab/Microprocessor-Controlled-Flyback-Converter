@@ -29,7 +29,7 @@ int main(void)
 	//Set counter options
 	TCCR1A = 0b10100010;
 	TCCR1B = 0b00011001;
-	//Set TOP = ICRdeasflhdlb1 for 24.5kHz
+	//Set TOP = ICR1 for 24.5kHz
 	ICR1 = 0x14D;
 	//Arbitrarily Set OCR1A (Duty Cycle)
 	OCR1A = 0x05;
