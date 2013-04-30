@@ -37,9 +37,17 @@ int main(void)
 	GICR = 1<<INT0 | 1<<INT1;
 	//Set Falling Edge Trigger for Interrupts
 	MCUCR = 1<<ISC01 | 1<<ISC00 | 1<<ISC11 | 1<<ISC10;
+	//set ADC prescaler to divion of 16, so at a clk f of 8Mhz, ADC speed is 500kHz
+	ADCSRA |= 1<<APS2; //see table 85 in datasheet for prescaler selection options
+	//set voltage refrence as AVCC, should be 5volts?  see page 208
+	//we should maybe change this to a more stable refrence?
+	ADMUX |= 1<<REFS0;
+	//enable ADC interupt
+	ADSRA |= 1<<ADIE;
+	//enable the ADC
+	ADSRA |= 1<<ADEN;
 	//Re-enable Interrupts
 	sei();
-	
     while(1)
     {
 		_delay_us(1);
@@ -63,9 +71,19 @@ ISR(INT0_vect){
 //This interrupt takes an input from a button and decreases the duty
 //cycle.
 //Params: in
-ISR(INT1_vect){
+ISR(INT1_vect){  
 	if(OCR1A > 0x01)
 
 		OCR1A -= 0x01;
 
 }
+<<<<<<< HEAD
+=======
+ISR(ADC_vect) //ADC inturept vector function
+{
+	uinit8_t theLowADC = ADCL;  //assign the variable theLowADC as the value in the register ADCL
+	uinit16_t theTenBitResults = ADCH<<8;  //assign the variable theTenBitResults as the value in ADCH shifted 8 left.
+	//Display the value on the Display
+	ADCSRA |=1<<ADSC;  //start ADC conversion
+}
+>>>>>>> 26ad03e2f0f423e543e22276d296250179b79d20
