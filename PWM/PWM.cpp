@@ -8,9 +8,14 @@
  *			 converter.  The output voltage should be held at a user-
  *			 defined value while the input voltage varies randomly.
  *
- *	Input:   Voltage Up, Voltage Down, Over-Current, Feedback
+ *	Input:   PIND2 - Voltage Up
+ *			 PIND3 - Voltage Down
  *
- *	Output:  Voltage Display, PWM
+ *	Output:  PIND5 - PWM
+ *			 PORTB - LCD Data Bus
+ *			 PIND0 - LCD Register Select
+ *			 PIND1 - LCD Read/Write
+ *			 PIND7 - LCD Enable
  *
 \*---------------------------------------------------------------------*/
 
@@ -19,22 +24,20 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+void LCDInit();
+void LCDCommand(unsigned char command);
+void LCDData(unsigned char data);
 
 int main(void)
 {
-	int cnt = 0;
-	
+
 	//Disable Interrupts
 	cli();
-	//Set PIND5(PWM) to Output and PIN3:2(INT1:0) to Input
-	DDRD = 0b00100000;
-	//Set PORTC for LCD Data Bus
-	DDRC = 0x00;
-	//Set PORTA7:5 for LCD Control
-	DDRB = 0b11100000;
+	DDRD = 0xA3;
+	DDRB = 0xFF;
 	//Set counter options
-	TCCR1A = 0b10100010;
-	TCCR1B = 0b00011001;
+	TCCR1A = 0xA2;
+	TCCR1B = 0x19;
 	//Set TOP = ICR1 for 24.5kHz
 	ICR1 = 0x14D;
 	//Arbitrarily Set OCR1A (Duty Cycle)
@@ -54,13 +57,12 @@ int main(void)
 	ADCSRA |= 1<<ADEN;
 	//Re-enable Interrupts
 	sei();
+	
+	LCDInit();
+	
     while(1)
     {
-		_delay_us(1);
-		if(cnt % 2 == 0)
-			OCR1A++;
-		else
-			OCR1A--;		
+		
     }
 }
 
@@ -90,4 +92,34 @@ ISR(ADC_vect) //ADC interrupt vector function
 	uint16_t theTenBitResults = ADCH<<8;  //assign the variable theTenBitResults as the value in ADCH shifted 8 left.
 	//Display the value on the Display
 	ADCSRA |=1<<ADSC;  //start ADC conversion
+}
+
+void LCDInit()
+{
+	_delay_ms(32);
+	LCDCommand(0x38);
+	LCDCommand(0x0C);
+	LCDCommand(0x01);
+	_delay_ms(1);
+	LCDCommand(0x04);
+}
+
+void LCDCommand(unsigned char command)
+{
+	PORTB = command;
+	PORTD |= 1<<PIND7;
+	PORTD &= ~0x03;
+	_delay_ms(1);
+	PORTD &= ~1<<PIND7;
+	_delay_ms(1);
+}
+
+void LCDData(unsigned char data)
+{
+	PORTB = data;
+	PORTD |= (1<<PIND7 | 1<<PIND1);
+	PORTD &= ~0x01;
+	_delay_ms(1);
+	PORTD &= ~0x80;
+	_delay_ms(1);
 }
