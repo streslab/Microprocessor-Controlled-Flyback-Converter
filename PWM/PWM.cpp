@@ -47,7 +47,7 @@ void LCDVoltage(int number, unsigned char cursorStartPos);
 //Global Variables
 volatile uint8_t theLowADC;
 volatile uint16_t theTenBitResults;
-int set_voltage = 1*maxvoltage/1024, previous_error = 0;
+int set_voltage = 150, previous_error = 0;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
 int error, feedback_voltage, output;
 int D_error = 0, I_error = 0;
 
@@ -102,6 +102,8 @@ int main(void)
 	{
 		//_delay_ms(4000*_dt_); //delay within the loop
 		
+		//feedback voltage is theTenbitresults
+		feedback_voltage = theTenBitResults;
 		
 		//Calculate Proportional Error
 		error = set_voltage - feedback_voltage;
@@ -116,7 +118,7 @@ int main(void)
 		output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
 		
 		//set OCR1A Duty cycle to output
-		OCR1A = output;
+		OCR1A = output/1024; //duty cycle is the output (new feedback adjusted value)/steps in the adc
 		
 		//Update Previous error
 		previous_error = error;
