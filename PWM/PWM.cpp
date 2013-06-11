@@ -102,8 +102,6 @@ int main(void)
 	{
 		//_delay_ms(4000*_dt_); //delay within the loop
 		
-		//feedback voltage is theTenbitresults
-		feedback_voltage = theTenBitResults;
 		
 		//Calculate Proportional Error
 		error = set_voltage - feedback_voltage;
