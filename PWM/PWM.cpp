@@ -23,8 +23,8 @@
 #define F_CPU 8000000
 
 // Define various Gains for PID. initial hit and miss....
-#define P_GAIN 0.5  //initial 0.8
-#define I_GAIN 0.001 //initial 0.005
+#define P_GAIN 0.2  //initial 0.8
+#define I_GAIN 0.000 //initial 0.005
 #define D_GAIN 0.000  //initial 0.01
 #define _dt_ 0.5
 #define mult 1000
@@ -116,13 +116,18 @@ int main(void)
 		output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
 		
 		//set OCR1A Duty cycle to output
-		OCR1A = output/1024; //duty cycle is the output (new feedback adjusted value)/steps in the adc
+		if(output > 0x3)
+			{
+				output = 0x3;
+			}
+		OCR1A = output; //duty cycle is the output (new feedback adjusted value)/steps in the adc
 		
 		//Update Previous error
 		previous_error = error;
 		_delay_ms(255);
-		feedback_voltage = theTenBitResults * 3;
-		LCDVoltage(feedback_voltage,0xC5);
+		feedback_voltage = theTenBitResults;
+		//LCDVoltage(feedback_voltage,0xC5);
+		LCDVoltage(feedback_voltage,0xC5);  //the duty cycle
 	}	
 }
 
@@ -242,6 +247,7 @@ void LCDVoltage(int number, unsigned char cursorStartPos)
 	int digit;
 	int arr[4];
 	int tempNumber;
+	number = number*3;
 	for (int i = 1; i <= 4; i++) 
 	{
 		 index = 4 - i;
