@@ -23,7 +23,7 @@
 #define F_CPU 8000000
 
 // Define various Gains for PID. initial hit and miss....
-#define P_GAIN 0.2  //initial 0.8
+#define P_GAIN 0.23  //initial 0.8
 #define I_GAIN 0.000 //initial 0.005
 #define D_GAIN 0.000  //initial 0.01
 #define _dt_ 0.5
@@ -47,7 +47,7 @@ void LCDVoltage(int number, unsigned char cursorStartPos);
 //Global Variables
 volatile uint8_t theLowADC;
 volatile uint16_t theTenBitResults;
-int set_voltage = 150, previous_error = 0;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
+int set_voltage = 100, previous_error = 0;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
 int error, feedback_voltage, output;
 int D_error = 0, I_error = 0;
 
@@ -68,7 +68,7 @@ int main(void)
 	//Set counter options
 	TCCR1A = 0xA2;
 	TCCR1B = 0x19;
-	//Set TOP = ICR1 for 24.5kHz
+	//Set TOP = ICR1 for 24.5kHz 
 	ICR1 = 0x090;
 	//Arbitrarily Set OCR1A (Duty Cycle)
 	OCR1A = 0x05;
@@ -115,16 +115,16 @@ int main(void)
 		//Get output by summing up respective errors multiplied with their respective Gains
 		output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
 		
-		//set OCR1A Duty cycle to output
-		if(output > 0x3)
-			{
-				output = 0x3;
-			}
-		OCR1A = output; //duty cycle is the output (new feedback adjusted value)/steps in the adc
+		output = output/10;
+		if(output > 0x14)
+		{
+			output = 0x14;			
+		}
+		OCR1A = output; 
 		
 		//Update Previous error
 		previous_error = error;
-		_delay_ms(255);
+		//_delay_ms(255);
 		feedback_voltage = theTenBitResults;
 		//LCDVoltage(feedback_voltage,0xC5);
 		LCDVoltage(feedback_voltage,0xC5);  //the duty cycle
@@ -247,7 +247,7 @@ void LCDVoltage(int number, unsigned char cursorStartPos)
 	int digit;
 	int arr[4];
 	int tempNumber;
-	number = number*3;
+	tempNumber = number*3;
 	for (int i = 1; i <= 4; i++) 
 	{
 		 index = 4 - i;
