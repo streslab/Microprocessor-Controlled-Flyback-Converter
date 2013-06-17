@@ -27,8 +27,7 @@
 #define I_GAIN 0.000 //initial 0.005
 #define D_GAIN 0.000  //initial 0.01
 #define _dt_ 0.5
-#define mult 1000
-#define maxvoltage 30 //set this based on the voltage divider setup used (max measurable voltage)
+
 
 //Includes
 #include <avr/interrupt.h>
@@ -47,16 +46,16 @@ void LCDVoltage(int number, unsigned char cursorStartPos);
 //Global Variables
 volatile uint8_t theLowADC;
 volatile uint16_t theTenBitResults;
-int set_voltage = 100, previous_error = 0;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
-int error, feedback_voltage, output;
-int D_error = 0, I_error = 0;
+int set_voltage = 100;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
+int previous_error = 0;  //for the PID
+int feedback_voltage;
 
 //Constants
 const int charOffset = 0x30;
+const int maxvoltage = 3000; //set this based on the voltage divider setup used (max measurable voltage * 1000)
 
 int main(void)
 {
-
 	//Disable Interrupts
 	cli();
 	//Set data direction
@@ -91,76 +90,69 @@ int main(void)
 	//Re-enable Interrupts
 	sei();
 	
-	LCDInit();
-	LCDString("  ADC Voltage:  ",0x80);
-	LCDString("     00.00V     ",0xC0);
 	//setup PID
 	previous_error = set_voltage - feedback_voltage; //calculate the previous difference between set and ADC input voltage
 	
+	LCDInit();
+	LCDString("  ADC Voltage:  ",0x80);
+	LCDString("     00.00V     ",0xC0);
 	
 	while(1)
 	{
-		//_delay_ms(4000*_dt_); //delay within the loop
-		
-		
-		//Calculate Proportional Error
-		error = set_voltage - feedback_voltage;
-		
-		//Calculate Integral Error by summing up small small errors
-		I_error += (error)*_dt_;
-		
-		//Calculate Differential Error, by dividing error by time interval
-		D_error = (error - previous_error)/_dt_;
-
-		//Get output by summing up respective errors multiplied with their respective Gains
-		output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
-		
-		output = output/10;
-		if(output > 0x14)
-		{
-			output = 0x14;			
-		}
-		OCR1A = output; 
-		
-		//Update Previous error
-		previous_error = error;
-		//_delay_ms(255);
-		feedback_voltage = theTenBitResults;
 		//LCDVoltage(feedback_voltage,0xC5);
-		LCDVoltage(feedback_voltage,0xC5);  //the duty cycle
+		LCDVoltage(feedback_voltage,0xC5);  //the ADC Voltage
 	}	
 }
 
-//This interrupt takes an input from a button and increases the duty
-//cycle.
+//This interrupt at the timer0 frequency runs the PID code
+//Params: 
+ISR(TIM0_COMP) 
+{
+	//Assign local variables
+	int error, output;
+	int D_error = 0, I_error = 0;
+	
+	feedback_voltage = theTenBitResults;
+	//Calculate Proportional Error
+	error = set_voltage - feedback_voltage;
+	
+	//Calculate Integral Error by summing up small small errors
+	I_error += (error)*_dt_;
+	
+	//Calculate Differential Error, by dividing error by time interval
+	D_error = (error - previous_error)/_dt_;
+
+	//Get output by summing up respective errors multiplied with their respective Gains
+	output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
+	
+	output = output/10;  //this division by 10 is a guess and we need to do the math to compare the duty cycle to the feedback comparison
+	
+	if(output > 0x14) //temp max duty cycle for debugging
+	{
+		output = 0x14;
+	}
+	OCR1A = output;  //duty cycle
+	
+	previous_error = error;  //Update Previous error
+
+}
+
+//This interrupt takes an input from a button and increases the set voltage
 //Params: in
 ISR(INT0_vect){
-	//raise set point voltage if less than the max...
-	if(set_voltage < maxvoltage)
+	if(set_voltage < maxvoltage)  //raise set point voltage if less than the max...
 	{
 		set_voltage++;  //update integer variable of set voltage
 	}
-	
-	
-	/////////////////////// This loop was to test, changing the duty cycle... for the actual project, we need to adjust the set voltage
-	// if(OCR1A <= (ICR1 - 1))
-	//OCR1A += 0x01;
-	//////////////////////
 }
 
-//This interrupt takes an input from a button and decreases the duty
-//cycle.
+//This interrupt takes an input from a button and decreases the set voltage
 //Params: in
 ISR(INT1_vect){  
-	//lower set point voltage
-	if(set_voltage > 0)
+	if(set_voltage > 0)  //lower set point voltage
 	{
 		set_voltage--;  //update integer variable of set voltage
 	}
-	////////////////////// This loop was to test, changing the duty cycle... for the actual project, we need to adjust the setvoltage
-	//if(OCR1A > 0x01)
-	//OCR1A -= 0x01;
-	////////////////////////
 }
 
 //This interrupt reads the ADC port and converts it to a usable value.
