@@ -125,8 +125,8 @@ ISR(TIM0_COMP)
 	//Get output by summing up respective errors multiplied with their respective Gains
 	output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
 	
-	output = output/10;  //this division by 10 is a guess and we need to do the math to compare the duty cycle to the feedback comparison
-	
+	output = (output/14)+.5;  //this division by 14 needs tried
+		
 	if(output > 0x14) //temp max duty cycle for debugging
 	{
 		output = 0x14;
