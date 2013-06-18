@@ -65,8 +65,11 @@ int main(void)
 	// set PORTA initial values
 	PORTA = 0x00;
 	//Set counter options
+	TCCR0 = 0x02;
 	TCCR1A = 0xA2;
 	TCCR1B = 0x19;
+	//Enable Timer0 Overflow Interrupt
+	TIMSK |= 0x01;
 	//Set TOP = ICR1 for 24.5kHz 
 	ICR1 = 0x090;
 	//Arbitrarily Set OCR1A (Duty Cycle)
@@ -106,7 +109,7 @@ int main(void)
 
 //This interrupt at the timer0 frequency runs the PID code
 //Params: 
-ISR(TIM0_COMP) 
+ISR(TIM0_OVF_vect) 
 {
 	//Assign local variables
 	int error, output;
