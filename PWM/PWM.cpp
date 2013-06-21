@@ -23,10 +23,10 @@
 #define F_CPU 8000000
 
 // Define various Gains for PID. initial hit and miss....
-#define P_GAIN 0.23  //initial 0.8
+#define P_GAIN 15  //initial 0.8
 #define I_GAIN 0.000 //initial 0.005
 #define D_GAIN 0.000  //initial 0.01
-#define _dt_ 0.5
+ 
 
 
 //Includes
@@ -48,11 +48,13 @@ volatile uint8_t theLowADC;
 volatile uint16_t theTenBitResults;
 int set_voltage = 100;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
 int previous_error = 0;  //for the PID
+int I_error = 0;
 int feedback_voltage;
 
 //Constants
 const int charOffset = 0x30;
-const int maxvoltage = 3000; //set this based on the voltage divider setup used (max measurable voltage * 1000)
+const int maxvoltage = 3000; //3000 = 30.00 volts
+const int setvoltageincrement = 50;
 
 int main(void)
 {
@@ -61,12 +63,15 @@ int main(void)
 	//Set data direction
 	DDRD = 0xA3;
 	DDRB = 0xFF;
-	DDRA |= (1 << 1);
+	DDRA = 0x00;
 	// set PORTA initial values
 	PORTA = 0x00;
 	//Set counter options
+	TCCR0 = 0x02;
 	TCCR1A = 0xA2;
 	TCCR1B = 0x19;
+	//Enable Timer0 Overflow Interrupt
+	TIMSK |= 0x01;
 	//Set TOP = ICR1 for 24.5kHz 
 	ICR1 = 0x090;
 	//Arbitrarily Set OCR1A (Duty Cycle)
@@ -91,46 +96,50 @@ int main(void)
 	sei();
 	
 	//setup PID
+	
 	previous_error = set_voltage - feedback_voltage; //calculate the previous difference between set and ADC input voltage
 	
 	LCDInit();
-	LCDString("  ADC Voltage:  ",0x80);
-	LCDString("     00.00V     ",0xC0);
+	LCDString(" ADC       SET  ",0x80);
+	LCDString("00.00V    00.00V",0xC0);
 	
+	int TheReedVariable = feedback_voltage * 3;
 	while(1)
 	{
-		//LCDVoltage(feedback_voltage,0xC5);
-		LCDVoltage(feedback_voltage,0xC5);  //the ADC Voltage
+		
+		LCDVoltage(TheReedVariable,0xC0);  //the ADC Voltage
+		LCDVoltage(set_voltage,0xCA);
+		_delay_ms(100);
 	}	
 }
 
 //This interrupt at the timer0 frequency runs the PID code
 //Params: 
-ISR(TIM0_COMP) 
+ISR(TIMER0_OVF_vect) 
 {
 	//Assign local variables
 	int error, output;
-	int D_error = 0, I_error = 0;
+	int D_error = 0;
 	
 	feedback_voltage = theTenBitResults;
 	//Calculate Proportional Error
 	error = set_voltage - feedback_voltage;
 	
 	//Calculate Integral Error by summing up small small errors
-	I_error += (error)*_dt_;
+	I_error += (error)* I_GAIN;
 	
 	//Calculate Differential Error, by dividing error by time interval
-	D_error = (error - previous_error)/_dt_;
+	D_error = (error - previous_error);
 
 	//Get output by summing up respective errors multiplied with their respective Gains
-	output = (P_GAIN * error) + (I_GAIN * I_error) + (D_GAIN * D_error);
+	output = (P_GAIN * error) + (I_error) + (D_GAIN * D_error);
 	
-	output = (output/14)+.5;  //this division by 14 needs tried
+	output = ((output + feedback_voltage)/14)+.5;  //this division by 14 needs tried
 		
-	if(output > 0x14) //temp max duty cycle for debugging
-	{
-		output = 0x14;
-	}
+	//if(output > 0x14) //temp max duty cycle for debugging
+	//{
+	//	output = 0x14;
+	//}
 	OCR1A = output;  //duty cycle
 	
 	previous_error = error;  //Update Previous error
@@ -140,18 +149,18 @@ ISR(TIM0_COMP)
 //This interrupt takes an input from a button and increases the set voltage
 //Params: in
 ISR(INT0_vect){
-	if(set_voltage < maxvoltage)  //raise set point voltage if less than the max...
+	if(set_voltage <= (maxvoltage - setvoltageincrement))  //raise set point voltage if less than the max...
 	{
-		set_voltage++;  //update integer variable of set voltage
+		set_voltage += setvoltageincrement;  //update integer variable of set voltage
 	}
 }
 
 //This interrupt takes an input from a button and decreases the set voltage
 //Params: in
 ISR(INT1_vect){  
-	if(set_voltage > 0)  //lower set point voltage
+	if(set_voltage >= setvoltageincrement)  //lower set point voltage
 	{
-		set_voltage--;  //update integer variable of set voltage
+		set_voltage -= setvoltageincrement;  //update integer variable of set voltage
 	}
 }
 
@@ -209,7 +218,7 @@ void LCDInit()
 	//Function Set
 	LCDCommand(0x3C);
 	//Display On
-	LCDCommand(0x0F);
+	LCDCommand(0x0C);
 	//Clear Display
 	LCDCommand(0x01);
 	_delay_ms(1);
@@ -238,14 +247,12 @@ void LCDVoltage(int number, unsigned char cursorStartPos)
 	int index;
 	int digit;
 	int arr[4];
-	int tempNumber;
-	tempNumber = number*3;
 	for (int i = 1; i <= 4; i++) 
 	{
 		 index = 4 - i;
-		 digit = tempNumber / pow(10, index);
+		 digit = number / pow(10, index);
 		 arr[i-1] = digit;
-		 tempNumber = tempNumber - pow(10, index) * digit;
+		 number = number - pow(10, index) * digit;
 	}
 	char hundredth = arr[3] + charOffset;
 	char tenth = arr[2] + charOffset;
