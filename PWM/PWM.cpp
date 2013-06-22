@@ -114,12 +114,8 @@ int main(void)
 }
 
 //This interrupt at the timer0 frequency runs the PID code
-//Params: 
-<<<<<<< HEAD
+//Params:
 ISR(TIMER0_OVF_vect) 
-=======
-ISR(TIM0_OVF_vect) 
->>>>>>> e20737b4271d832ff30d8195bae27c8aaf66d2ae
 {
 	//Assign local variables
 	int error, output;
