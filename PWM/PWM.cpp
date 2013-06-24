@@ -103,11 +103,10 @@ int main(void)
 	LCDString(" ADC       SET  ",0x80);
 	LCDString("00.00V    00.00V",0xC0);
 	
-	int TheReedVariable = feedback_voltage * 3;
+	int corrected_adc = feedback_voltage * 3;
 	while(1)
 	{
-		
-		LCDVoltage(TheReedVariable,0xC0);  //the ADC Voltage
+		LCDVoltage(corrected_adc,0xC0);  //the ADC Voltage
 		LCDVoltage(set_voltage,0xCA);
 		_delay_ms(100);
 	}	
