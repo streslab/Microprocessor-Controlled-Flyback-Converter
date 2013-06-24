@@ -23,9 +23,10 @@
 #define F_CPU 8000000
 
 // Define various Gains for PID. initial hit and miss....
-#define P_GAIN 15  //initial 0.8
-#define I_GAIN 0.000 //initial 0.005
-#define D_GAIN 0.000  //initial 0.01
+#define P_GAIN	4  //initial 0.8
+#define I_GAIN	2.5 //initial 0.05
+#define D_GAIN	0  //initial 0.01
+#define T		2048
  
 
 
@@ -34,6 +35,7 @@
 #include <avr/io.h>
 #include <tgmath.h>
 #include <util/delay.h>
+#include <stdlib.h>
 
 //Function Prototypes
 void LCDChar(char text, unsigned char cursorPosition);
@@ -46,10 +48,11 @@ void LCDVoltage(int number, unsigned char cursorStartPos);
 //Global Variables
 volatile uint8_t theLowADC;
 volatile uint16_t theTenBitResults;
-int set_voltage = 100;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
-int previous_error = 0;  //for the PID
-int I_error = 0;
-int feedback_voltage;
+volatile int set_voltage = 100;  //set_voltage is an integer value (ex. 150 = 1.50 volts)
+volatile int previous_error = 0;  //for the PID
+volatile int I_error = 0;
+volatile int switchdebounce = 0;
+volatile int feedback_voltage;
 
 //Constants
 const int charOffset = 0x30;
@@ -67,7 +70,7 @@ int main(void)
 	// set PORTA initial values
 	PORTA = 0x00;
 	//Set counter options
-	TCCR0 = 0x02;
+	TCCR0 = 0x03;
 	TCCR1A = 0xA2;
 	TCCR1B = 0x19;
 	//Enable Timer0 Overflow Interrupt
@@ -92,23 +95,20 @@ int main(void)
 	ADCSRA |= 1<<ADIE;
 	//Enable the ADC
 	ADCSRA |= 1<<ADEN;
-	//Re-enable Interrupts
-	sei();
-	
-	//setup PID
-	
-	previous_error = set_voltage - feedback_voltage; //calculate the previous difference between set and ADC input voltage
-	
 	LCDInit();
 	LCDString(" ADC       SET  ",0x80);
 	LCDString("00.00V    00.00V",0xC0);
-	
-	int corrected_adc = feedback_voltage * 3;
+	//Re-enable Interrupts
+	sei();
+	//setup PID
+	previous_error = set_voltage - feedback_voltage; //calculate the previous difference between set and ADC input voltage
+	//int corrected_adc = feedback_voltage * 3;
 	while(1)
 	{
-		LCDVoltage(corrected_adc,0xC0);  //the ADC Voltage
+		LCDVoltage(feedback_voltage*2.96,0xC0);  //the ADC Voltage
+		LCDVoltage(abs(I_error)*2.96,0x85);
 		LCDVoltage(set_voltage,0xCA);
-		_delay_ms(100);
+		_delay_ms(200);
 	}	
 }
 
@@ -117,49 +117,62 @@ int main(void)
 ISR(TIMER0_OVF_vect) 
 {
 	//Assign local variables
-	int error, output;
+	int error,pidoutput;
 	int D_error = 0;
-	
+	int icounter = 0;
+	//Increment Switch Debouncer
+	if(switchdebounce <= 1000)
+		switchdebounce++;
+		
+	if(icounter >= 488)
+		I_error = 0;
+		
 	feedback_voltage = theTenBitResults;
 	//Calculate Proportional Error
-	error = set_voltage - feedback_voltage;
+	error = set_voltage/2.96 - feedback_voltage;
 	
 	//Calculate Integral Error by summing up small small errors
-	I_error += (error)* I_GAIN;
+	I_error += (error*T/10000)* I_GAIN;
+	if(I_error >= 500)
+		I_error = 500;
+	else if(I_error <= -400)
+		I_error = -400;
 	
 	//Calculate Differential Error, by dividing error by time interval
 	D_error = (error - previous_error);
 
 	//Get output by summing up respective errors multiplied with their respective Gains
-	output = (P_GAIN * error) + (I_error) + (D_GAIN * D_error);
+	pidoutput = (P_GAIN * error) + (I_error) + (D_GAIN * D_error);
 	
-	output = ((output + feedback_voltage)/14)+.5;  //this division by 14 needs tried
+	pidoutput = ((pidoutput + feedback_voltage)/14)+.5;  //this division by 14 needs tried
 		
 	//if(output > 0x14) //temp max duty cycle for debugging
 	//{
 	//	output = 0x14;
 	//}
-	OCR1A = output;  //duty cycle
+	OCR1A = pidoutput;  //duty cycle
 	
 	previous_error = error;  //Update Previous error
-
+	icounter++;
 }
 
 //This interrupt takes an input from a button and increases the set voltage
 //Params: in
 ISR(INT0_vect){
-	if(set_voltage <= (maxvoltage - setvoltageincrement))  //raise set point voltage if less than the max...
+	if((set_voltage <= (maxvoltage - setvoltageincrement)) && (switchdebounce >= 100))  //raise set point voltage if less than the max...
 	{
 		set_voltage += setvoltageincrement;  //update integer variable of set voltage
+		switchdebounce = 0;
 	}
 }
 
 //This interrupt takes an input from a button and decreases the set voltage
 //Params: in
 ISR(INT1_vect){  
-	if(set_voltage >= setvoltageincrement)  //lower set point voltage
+	if((set_voltage >= setvoltageincrement) && (switchdebounce >= 100))  //lower set point voltage
 	{
 		set_voltage -= setvoltageincrement;  //update integer variable of set voltage
+		switchdebounce = 0;
 	}
 }
 
